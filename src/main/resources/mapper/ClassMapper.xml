@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo21.mapper.ClassMapper">
+    <select id="selectAllClasses" resultType="com.example.demo21.pojo.StuClass">
+        SELECT class_id as classId, class_name as className, department FROM stuclass
+    </select>
+</mapper>

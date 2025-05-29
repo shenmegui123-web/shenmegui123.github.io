@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>修改学生信息</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 统一风格样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>修改学生信息</h2>
+    <div id="loading" class="loading">加载中...</div>
+    <form id="updateForm" style="display: none;">
+        <div class="form-group">
+            <label>学生ID:</label>
+            <input type="number" id="idInput" readonly>
+        </div>
+        <div class="form-group">
+            <label>学生姓名:</label>
+            <input type="text" id="nameInput" required>
+        </div>
+        <div class="form-group">
+            <label>学生学号:</label>
+            <input type="text" id="stuNoInput" required>
+        </div>
+        <div class="form-group">
+            <label>所属班级:</label>
+            <select id="classSelect" required>
+                <option value="">请选择班级</option>
+                <!-- 动态加载班级选项 -->
+            </select>
+        </div>
+        <button type="button" onclick="submitUpdate()">提交修改</button>
+    </form>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    //从当前页面的url中查询id赋值给studentid
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('id');
+
+    //初始化加载
+    $(document).ready(function() {
+        // 第一步：加载班级数据
+        loadClasses().then(() => {
+            // 第二步：加载学生信息
+            loadStudent();
+        }).catch(error => {
+            showError('初始化数据加载失败: ' + error);
+        });
+    });
+
+    // 加载班级数据
+    function loadClasses() {
+        //异步操作，
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: `${BASE_URL}/api/getAllClasses`,
+                method: 'GET',
+                success: function(classes) {
+                    //从页面中找到ID为classSelect的元素
+                    const select = $('#classSelect');
+                    //empty用于删除旧的选项
+                    select.empty().append('<option value="">请选择班级</option>');
+                    classes.forEach(cls => {
+                        select.append(new Option(
+                            `${cls.className} (${cls.department})`, // 显示班级名称和部门
+                            cls.classId // 实际存储班级ID
+                        ));
+                    });
+                    resolve();
+                },
+                //xhr是XMLHttpRequest 对象，包含了关于请求和错误的信息。
+                error: function(xhr) {
+                    reject(xhr.statusText);
+                }
+            });
+        });
+    }
+
+    // 加载学生信息
+    function loadStudent() {
+        $.ajax({
+            url: `${BASE_URL}/api/getStudentById/${studentId}`,
+            method: 'GET',
+            success: function(student) {
+                $('#idInput').val(student.id);
+                $('#nameInput').val(student.stuName);
+                $('#stuNoInput').val(student.stuNo);
+
+                // 设置班级选择
+                const classSelect = $('#classSelect');
+                classSelect.val(student.stuClass);
+                if (!classSelect.val()) {
+                    classSelect.addClass('invalid');
+                }
+
+                // 显示表单
+                $('#loading').hide();
+                $('#updateForm').show();
+            },
+            error: function(xhr) {
+                showError('获取学生信息失败: ' + xhr.statusText);
+                setTimeout(() => window.location.href = 'list.html', 1500);
+            }
+        });
+    }
+
+    // 提交修改
+    function submitUpdate() {
+        const updatedData = {
+            id: parseInt($('#idInput').val()),
+            stuName: $('#nameInput').val().trim(),
+            stuNo: $('#stuNoInput').val().trim(),
+            stuClass: $('#classSelect').val()
+        };
+
+        // 表单验证
+        if (!validateForm(updatedData)) return;
+
+        // 显示加载状态
+        const btn = $('button');
+        btn.prop('disabled', true).html('<i class="loader"></i> 提交中...');
+
+        $.ajax({
+            url: `${BASE_URL}/api/updateStudent/${studentId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(updatedData),
+            success: function() {
+                showSuccess('修改成功！正在跳转...');
+                setTimeout(() => window.location.href = 'ShowAllStudent.html', 1000);
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).text('提交修改');
+                let errorMsg = '修改失败: ';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg += xhr.responseJSON.message;
+                } else {
+                    errorMsg += xhr.statusText;
+                }
+                showError(errorMsg);
+            }
+        });
+    }
+
+    // 表单验证
+    function validateForm(data) {
+        let isValid = true;
+
+        // 清空错误样式
+        $('input, select').removeClass('invalid');
+
+        if (!data.stuName) {
+            $('#nameInput').addClass('invalid');
+            isValid = false;
+        }
+        if (!data.stuNo) {
+            $('#stuNoInput').addClass('invalid');
+            isValid = false;
+        }
+        if (!data.stuClass) {
+            $('#classSelect').addClass('invalid');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showError('请填写所有必填字段');
+        }
+        return isValid;
+    }
+
+    // 显示成功提示
+    function showSuccess(message) {
+        alert(message);
+    }
+
+    // 显示错误提示
+    function showError(message) {
+        alert('错误: ' + message);
+    }
+</script>
+
+<!-- 可选的加载动画样式 -->
+<style>
+    .invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 2px rgba(220,53,69,0.25);
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .loader {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+    }
+</style>
+</body>
+</html>

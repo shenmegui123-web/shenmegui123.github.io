@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <h1>简易功能概括</h1>
+
+  <meta charset="UTF-8">
+  <title>Student Management</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script type="text/javascript">
+    const BASE_URL = 'http://localhost:8080'; // 基础后端URL
+
+    function handleResponse(responseDivId, response) {
+      document.getElementById(responseDivId).innerHTML = JSON.stringify(response, null, 2);
+    }
+
+    function handleError(responseDivId, error) {
+      const errorMsg = error.responseJSON ? JSON.stringify(error.responseJSON, null, 2) : error.statusText;
+      document.getElementById(responseDivId).innerHTML = `Error: ${errorMsg}`;
+    }
+
+    function getAllStudents() {
+      $.ajax({
+        url: `${BASE_URL}/api/getAllStudents`,
+        method: 'GET',
+        success: (data) => handleResponse('allStudents', data),
+        error: (error) => handleError('allStudents', error)
+      });
+    }
+
+    function getStudentById() {
+      const stuId = $('#stuId').val();
+      if (!stuId) {
+        alert("请输入学生ID");
+        return;
+      }
+      $.ajax({
+        url: `${BASE_URL}/api/getStudentById/${stuId}`,
+        method: 'GET',
+        success: (data) => handleResponse('studentByIdResult', data),
+        error: (error) => handleError('studentByIdResult', error)
+      });
+    }
+
+    function addStudent() {
+      const stuId = parseInt($('#newStuId').val());
+      const stuName = $('#newStuName').val();
+      const stuNum = $('#newStuNum').val();
+      const stuClass = $('#newStuClass').val();
+
+      if (!stuId || !stuName || !stuNum || !stuClass) {
+        alert("请填写所有字段");
+        return;
+      }
+
+      const stu = {
+        id: stuId,
+        stuName: stuName,
+        stuNo: stuNum,
+        stuClass: stuClass
+      };
+
+      $.ajax({
+        url: `${BASE_URL}/api/addStudent`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(stu),
+        success: (data) => handleResponse('addStudentResult', data),
+        error: (error) => handleError('addStudentResult', error)
+      });
+    }
+
+    function updateStudent() {
+      const stuId = parseInt($('#updateStuId').val());
+      const newId = parseInt($('#updateNewId').val());
+      const stuName = $('#updateStuName').val();
+      const stuNum = $('#updateStuNum').val();
+      const stuClass = $('#updateStuClass').val();
+
+      if (!stuId || !newId || !stuName || !stuNum || !stuClass) {
+        alert("请填写所有字段");
+        return;
+      }
+
+      const stu = {
+        id: newId,
+        stuName: stuName,
+        stuNo: stuNum,
+        stuClass: stuClass
+      };
+
+      $.ajax({
+        url: `${BASE_URL}/api/updateStudent/${stuId}`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(stu),
+        success: (data) => handleResponse('updateStudentResult', data),
+        error: (error) => handleError('updateStudentResult', error)
+      });
+    }
+
+    function deleteStudent() {
+      const stuId = $('#delStuId').val();
+      if (!stuId) {
+        alert("请输入学生ID");
+        return;
+      }
+      $.ajax({
+        url: `${BASE_URL}/api/deleteStudent/${stuId}`,
+        method: 'DELETE',
+        success: (data) => handleResponse('deleteStudentResult', data),
+        error: (error) => handleError('deleteStudentResult', error)
+      });
+    }
+  </script>
+</head>
+<body>
+
+<a href="ShowAllStudent.html">去到系统首页</a>
+
+<h2>获取所有学生</h2>
+<button onclick="getAllStudents()">获取所有学生</button>
+<pre id="allStudents"></pre>
+
+<h2>按ID查询学生</h2>
+<input type="number" id="stuId" placeholder="输入学生ID">
+<button onclick="getStudentById()">查询</button>
+<pre id="studentByIdResult"></pre>
+
+<h2>添加新学生</h2>
+<input type="number" id="newStuId" placeholder="输入ID">
+<input type="text" id="newStuName" placeholder="输入姓名">
+<input type="text" id="newStuNum" placeholder="输入学号">
+<input type="text" id="newStuClass" placeholder="输入班级">
+<button onclick="addStudent()">添加</button>
+<pre id="addStudentResult"></pre>
+
+<h2>更新学生信息</h2>
+<input type="number" id="updateStuId" placeholder="原学生ID">
+<input type="number" id="updateNewId" placeholder="新学生ID">
+<input type="text" id="updateStuName" placeholder="新姓名">
+<input type="text" id="updateStuNum" placeholder="新学号">
+<input type="text" id="updateStuClass" placeholder="新班级">
+<button onclick="updateStudent()">更新</button>
+<pre id="updateStudentResult"></pre>
+
+<h2>按ID删除学生</h2>
+<input type="number" id="delStuId" placeholder="输入学生ID">
+<button onclick="deleteStudent()">删除</button>
+<pre id="deleteStudentResult"></pre>
+
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <title>添加新学生</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 新增下拉框样式 */
+        select {
+            width: 100%;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") no-repeat right 12px center/12px;
+            appearance: none;
+        }
+
+        /* 其他保持原有样式不变 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre#addStudentResult {
+            margin-top: 20px;
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #333;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="ShowAllStudent.html">返回首页</a>
+    <h2>添加新学生</h2>
+    <input type="number" id="newStuId" placeholder="请输入ID">
+    <input type="text" id="newStuName" placeholder="请输入姓名">
+    <input type="text" id="newStuNum" placeholder="请输入学号">
+
+    <!-- 修改为下拉选择框 -->
+    <select id="classSelect" required>
+        <option value="">正在加载班级列表...</option>
+    </select>
+
+    <button onclick="addStudent()">添加学生</button>
+    <pre id="addStudentResult"></pre>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    // 页面加载时获取班级列表
+    $(document).ready(function() {
+        loadClasses();
+    });
+
+    function loadClasses() {
+        $.ajax({
+            url: `${BASE_URL}/api/getAllClasses`,
+            method: 'GET',
+            // beforeSend: function() {
+            //     $('#classSelect').html('<option value="">正在加载班级列表...</option>');
+            // },
+            success: function(classes) {
+                //严格相等（类型也有要求）
+                if(classes.length === 0) {
+                    $('#classSelect').html('<option value="">暂无班级数据，请先创建班级</option>');
+                    return;
+                }
+
+                let options = '<option value="">请选择班级</option>';
+                classes.forEach(cls => {
+                    options += `<option value="${cls.classId}">${cls.className} (ID: ${cls.classId})</option>`;
+                });
+                $('#classSelect').html(options);
+            },
+            error: function(xhr) {
+                $('#classSelect').html('<option value="">班级加载失败，请刷新重试</option>');
+                console.error('加载班级失败:', xhr.statusText);
+            }
+        });
+    }
+
+    function addStudent() {
+        const stuId = parseInt($('#newStuId').val());
+        const stuName = $('#newStuName').val().trim();
+        const stuNum = $('#newStuNum').val().trim();
+        const classId = $('#classSelect').val();
+
+        if (!stuId || !stuName || !stuNum || !classId) {
+            alert("请填写所有必填字段");
+            return;
+        }
+
+        const stu = {
+            id: stuId,
+            stuName: stuName,
+            stuNo: stuNum,
+            stuClass: classId  // 这里提交的是班级ID
+        };
+
+        $.ajax({
+            url: `${BASE_URL}/api/addStudent`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(stu),
+            success: (data) => {
+                handleResponse('addStudentResult', data);
+                setTimeout(() => window.location.href = 'ShowAllStudent.html', 1500);
+            },
+            error: (error) => handleError('addStudentResult', error)
+        });
+    }
+
+    function handleResponse(responseDivId, response) {
+        const resultDiv = document.getElementById(responseDivId);
+        resultDiv.innerHTML = JSON.stringify(response, null, 2);
+        resultDiv.style.color = '#28a745';
+    }
+
+    function handleError(responseDivId, error) {
+        const resultDiv = document.getElementById(responseDivId);
+        const errorMsg = error.responseJSON
+            ? JSON.stringify(error.responseJSON, null, 2)
+            : `错误代码: ${error.status} (${error.statusText})`;
+
+        resultDiv.innerHTML = `错误信息:\n${errorMsg}`;
+        resultDiv.style.color = '#dc3545';
+    }
+</script>
+
+</body>
+</html>
