@@ -5,6 +5,7 @@ public class Student {
     private String stuNo;
     private String stuName;
     private String stuClass;
+    private String stuPassword;
     private StuClass sClass;
 
     public Student() {}
@@ -16,6 +17,20 @@ public class Student {
         this.stuClass = stuClass;
     }
 
+    public Student(int id,String stuNo, String stuName, String stuClass, String stuPassword) {
+        this.id = id;
+        this.stuNo = stuNo;
+        this.stuName = stuName;
+        this.stuClass = stuClass;
+        this.stuPassword = stuPassword;
+    }
+
+    public  String getStuPassword() {
+        return stuPassword;
+    }
+    public void setStuPassword(String stuPassword) {
+        this.stuPassword = stuPassword;
+    }
     public int getId() {
         return id;
     }

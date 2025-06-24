@@ -26,6 +26,10 @@ public class StuServiceImpl implements StuService {
         return stuMapper.selectStudentById(id);
     }
 
+    public Student selectStudentByNo(String no) {
+        return stuMapper.selectStudentByNo(no);
+    }
+
     @Override
     public Student addStudent(Student stu) {
         // 先查询是否存在该ID
@@ -61,5 +65,14 @@ public class StuServiceImpl implements StuService {
     @Override
     public List<Student> selectStudentsByConditions(Map<String, Object> queryConditions) {
         return stuMapper.selectstudentByConditions(queryConditions);
+    }
+
+    public Student login(Map<String, Object> queryConditions) {
+        return stuMapper.login(queryConditions);
+    }
+
+    @Override
+    public List<Student> getStudentsByTeacherUsername(String username) {
+        return stuMapper.getStudentsByTeacherUsername(username);
     }
 }

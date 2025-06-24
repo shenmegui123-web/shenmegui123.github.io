@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>教师管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 200px;
+            min-width: 150px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-bar input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .search-bar button,
+        a.button {
+            padding: 10px 16px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-bar button:hover,
+        a.button:hover {
+            background-color: #2980b9;
+        }
+
+        a.button {
+            display: inline-block;
+            text-decoration: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 22px;
+            color: #34495e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #fcfcfc;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        thead {
+            background-color: #ecf0f1;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #f0f8ff;
+        }
+
+        .actions button {
+            margin-right: 5px;
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+
+        #allTeachersTableContainer p {
+            text-align: center;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .search-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-bar input[type="text"],
+            .search-bar button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>教师管理系统</h1>
+    <a href="javascript:void(0);" onclick="logout()">退出登录</a>
+
+<!--    &lt;!&ndash; 搜索栏 &ndash;&gt;-->
+<!--    <div class="search-bar">-->
+<!--        <input type="text" id="searchName" placeholder="请输入教师姓名">-->
+<!--        <input type="text" id="searchClassId" placeholder="请输入班级ID">-->
+<!--        <button onclick="searchTeachers()">搜索</button>-->
+<!--        <button onclick="resetSearch()">重置</button>-->
+<!--    </div>-->
+
+    <a href="addTeacher.html">添加教师</a>
+
+    <a href="ShowAllStudent.html">管理学生</a>
+
+    <h2>所有教师信息</h2>
+    <div id="allTeachersTableContainer"></div>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    function handleError(divId, error) {
+        const errorMsg = error.responseJSON ? JSON.stringify(error.responseJSON, null, 2) : error.statusText;
+        document.getElementById(divId).textContent = `错误: ${errorMsg}`;
+    }
+
+    function renderTeachersTable(data) {
+        if (!data || data.length === 0) {
+            return "<p>没有符合条件的教师数据</p>";
+        }
+
+        let table = '<table><thead><tr>';
+        table += '<th>用户名</th><th>教师姓名</th><th>科目</th><th>班级</th><th>操作</th></tr></thead><tbody>';
+
+        data.forEach(teacher => {
+            table += `<tr>
+          <td>${teacher.username}</td>
+          <td>${teacher.teachername}</td>
+          <td>${teacher.subjectName}</td>
+          <td>${teacher.className}</td>
+          <td class="actions">
+            <button onclick="deleteTeacher(${teacher.username})">删除</button>
+          </td>
+        </tr>`;
+        });
+
+        table += '</tbody></table>';
+        return table;
+    }
+
+    // function searchTeachers() {
+    //     const name = $('#searchName').val().trim();
+    //     const classId = $('#searchClassId').val().trim();
+    //
+    //     // 构造查询参数
+    //     const params = {};
+    //     if (name) params.teacher_name = name;
+    //     if (classId) params.class_id = classId;
+    //
+    //     // 调用后端接口
+    //     $.ajax({
+    //         url: `${BASE_URL}/api/getTeachersByConditions`,
+    //         method: 'GET',
+    //         data: params,
+    //         success: (data) => {
+    //             $('#allTeachersTableContainer').html(renderTeachersTable(data));
+    //         },
+    //         error: (error) => handleError('allTeachersTableContainer', error)
+    //     });
+    // }
+    //
+    // function resetSearch() {
+    //     $('#searchName').val('');
+    //     $('#searchClassId').val('');
+    //     getAllTeachers(); // 重置时显示全部数据
+    // }
+
+    function deleteTeacher(username) {
+        if (!confirm("确定要删除这位教师吗？")) {
+            return;
+        }
+
+        $.ajax({
+            url: `${BASE_URL}/api/deleteTeacher/${username}`,
+            method: 'DELETE',
+            success: () => {
+                alert('删除成功');
+                getAllTeachers();
+            },
+            error: (error) => {
+                handleError('allTeachersTableContainer', error);
+            }
+        });
+    }
+
+    function getAllTeachers() {
+        $.ajax({
+            url: `${BASE_URL}/api/getAllTeacher`,
+            method: 'GET',
+            success: (data) => {
+                $('#allTeachersTableContainer').html(renderTeachersTable(data));
+            },
+            error: (error) => handleError('allTeachersTableContainer', error)
+        });
+    }
+
+    $(document).ready(function () {
+        getAllTeachers();
+    });
+
+    function logout() {
+        if (confirm("确定要退出登录吗？")) {
+            // 清除 localStorage 中的记住信息
+            localStorage.removeItem('rememberedUsername');
+            localStorage.removeItem('rememberedPassword');
+            localStorage.removeItem('rememberedRole');
+
+            alert("已安全退出");
+            window.location.href = "login.html"; // 跳转回登录页
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo21.mapper.TeacherMapper">
+
+
+    <select id="getAllTeacher" resultType="com.example.demo21.pojo.Teacher">
+        SELECT t.username,t.password,t.teacher_name as teachername,t.teacher_class as teacherclass,c.class_name as className,t.subject,s.subject_name as subjectName
+        FROM
+            teacher t
+                JOIN subject s ON t.subject = s.subject_id
+                JOIN stuclass c ON t.teacher_class = c.class_id  -- 新增 JOIN
+    </select>
+
+    <select id="login" parameterType="hashmap">
+        SELECT username,password
+        FROM teacher
+        <where>
+            <if test="username != null"> AND username = #{username} </if>
+            <if test="password != null"> AND password = #{password} </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.example.demo21.pojo.Teacher">
+        INSERT INTO teacher(username, password, teacher_class, teacher_name, subject)
+        VALUES(#{username}, #{password}, #{teacherclass}, #{teachername}, #{subject})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM teacher WHERE username=#{username}
+    </delete>
+
+
+</mapper>

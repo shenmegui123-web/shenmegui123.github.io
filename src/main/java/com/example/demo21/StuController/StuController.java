@@ -1,6 +1,7 @@
 package com.example.demo21.StuController;
 
 
+import com.example.demo21.mapper.StuMapper;
 import com.example.demo21.pojo.Student;
 import com.example.demo21.service.StuService;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,16 @@ public class StuController {
     @GetMapping("/api/retrieveStudentsByName/{stuName}")
     public List<Student> retrieveStudentsByName(@PathVariable("stuName") String name){
         return stuService.retrieveStudentsByName(name);
+    }
+
+    @GetMapping("/api/getstudentbyno")
+    public ResponseEntity<Student> getStudentByNo(@RequestParam String stuNo) {
+        Student student = stuService.selectStudentByNo(stuNo);
+        if (student != null) {
+            return ResponseEntity.ok(student);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
     @GetMapping("/api/getStudentById/{stuId}")
@@ -93,4 +104,25 @@ public class StuController {
         List<Student> students = stuService.selectStudentsByConditions(conditions);
         return ResponseEntity.ok(students);
     }
+
+    @GetMapping("/api/login")
+    public ResponseEntity<Student> login(
+            @RequestParam(value = "stu_no") String stu_no,
+            @RequestParam(value = "stu_password") String stu_password) {
+
+        Map<String, Object> conditions = new HashMap<>();
+        if(stu_no != null) conditions.put("stu_no", stu_no);
+        if(stu_password != null) conditions.put("stu_password", stu_password);
+
+        Student students = stuService.login(conditions);
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/api/byTeacher")
+    public ResponseEntity<List<Student>> getStudentsByTeacher(
+            @RequestParam String username) {
+        List<Student> students = stuService.getStudentsByTeacherUsername(username);
+        return ResponseEntity.ok(students);
+    }
+
 }

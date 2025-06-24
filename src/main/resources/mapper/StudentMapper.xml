@@ -17,11 +17,10 @@
     </resultMap>
 
     <select id="selectAll" resultMap="stuResultMap">
-        select stu.id,stu.stu_no,stu.stu_name,stu.stu_class,stuclass.class_id,stuclass.class_name,stuclass.department
+        select stu.id,stu.stu_no,stu.stu_name,stu.stu_class,stu.stu_password,stuclass.class_id,stuclass.class_name,stuclass.department
         from stu
         LEFT JOIN stuclass on stu.stu_class = stuclass.class_id
     </select>
-
 
     <select id="selectStudentById" resultType="com.example.demo21.pojo.Student">
         SELECT id, stu_no as stuNo, stu_name as stuName, stu_class as stuClass
@@ -29,8 +28,19 @@
         WHERE id = #{id}
     </select>
 
+    <select id="selectStudentByNo" resultMap="stuResultMap">
+        select stu.id,stu.stu_no,stu.stu_name,stu.stu_class,stu.stu_password,stuclass.class_id,stuclass.class_name,stuclass.department
+        from stu
+        LEFT JOIN stuclass on stu.stu_class = stuclass.class_id
+        WHERE stu_no = #{stuNo}
+    </select>
+
+<!--    <insert id="insert" >-->
+<!--        INSERT INTO stu(id,stu_no, stu_name, stu_class) VALUES ( #{id},#{stuNo}, #{stuName}, #{stuClass})-->
+<!--    </insert>-->
+
     <insert id="insert" >
-        INSERT INTO stu(id,stu_no, stu_name, stu_class) VALUES ( #{id},#{stuNo}, #{stuName}, #{stuClass})
+        INSERT INTO stu(id,stu_no, stu_name, stu_class, stu_password) VALUES ( #{id},#{stuNo}, #{stuName}, #{stuClass},#{stuPassword})
     </insert>
 
     <delete id="delete">
@@ -63,5 +73,31 @@
             <if test="class_id != null"> AND s.stu_class = #{class_id} </if>
         </where>
     </select>
+
+    <select id="login" parameterType="hashmap" resultMap="stuResultMap">
+        SELECT s.id, s.stu_name, s.stu_no,s.stu_password,sc.class_id, sc.class_name, sc.department
+        FROM stu s
+        LEFT JOIN stuclass sc ON s.stu_class = sc.class_id
+        <where>
+            <if test="stu_no != null"> AND s.stu_no = #{stu_no} </if>
+            <if test="stu_password != null"> AND s.stu_password = #{stu_password} </if>
+        </where>
+    </select>
+
+    <select id="getStudentsByTeacherUsername" parameterType="string" resultMap="stuResultMap">
+        SELECT s.id,s.stu_no,s.stu_name,s.stu_class,s.stu_password,sc.class_id,sc.class_name,sc.department,score.score AS student_score
+        FROM stu s
+                 LEFT JOIN stuclass sc ON s.stu_class = sc.class_id
+                 LEFT JOIN score ON s.id = score.student_id
+            AND score.subject_id = (
+                SELECT subject FROM teacher WHERE username = #{username}
+            )
+        WHERE s.stu_class = (
+            SELECT teacher_class FROM teacher WHERE username = #{username}
+        )
+    </select>
+
+
+
 
 </mapper>

@@ -4,6 +4,7 @@ public class StuClass {
     private int classId;
     private String className;
     private String department;
+    private StuClass tClass;
 
     public StuClass(int classId, String className, String department) {
         this.classId = classId;

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>学生管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #444;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 8px 12px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        tr:hover {
+            background-color: #f1f5ff;
+        }
+
+        .actions button {
+            margin-right: 5px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 15px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            input[type="text"], input[type="number"] {
+                width: 100%;
+            }
+            .search-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>学生管理系统</h1>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+        <input type="text" id="searchName" placeholder="请输入姓名">
+        <input type="text" id="searchNo" placeholder="请输入学号">
+        <button onclick="searchStudents()">搜索</button>
+        <button onclick="resetSearch()">重置</button>
+    </div>
+
+    <a href="javascript:void(0);" onclick="logout()">退出登录</a>
+
+    <h2>所有学生信息</h2>
+    <!-- 打分弹窗 -->
+    <div id="scoreModal" style="display:none; position:fixed; top:30%; left:40%; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1000;">
+        <h3 id="modalTitle">为 <span id="studentName"></span> 打分</h3>
+        <input type="number" id="scoreInput" placeholder="请输入分数" min="0" max="100" step="0.1" />
+        <br><br>
+        <button onclick="submitScore()">提交</button>
+        <button onclick="closeScoreModal()">取消</button>
+    </div>
+
+
+    <div id="scoreViewModal" style="display:none; position:fixed; top:30%; left:40%; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1000;">
+        <h3 id="modalTitle1">查看 <span id="viewStudentName"></span> 的成绩</h3>
+        <p id="studentScore">分数: 加载中...</p>
+        <br><br>
+        <button onclick="closeScoreViewModal()">关闭</button>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;"></div>
+    <div id="allStudentsTableContainer"></div>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('username');
+
+    function handleError(divId, error) {
+        const errorMsg = error.responseJSON ? JSON.stringify(error.responseJSON, null, 2) : error.statusText;
+        document.getElementById(divId).textContent = `错误: ${errorMsg}`;
+    }
+
+    function renderStudentsTable(data) {
+        if (!data || data.length === 0) {
+            return "<p>没有符合条件的学生数据</p>";
+        }
+
+        let table = '<table><thead><tr>';
+        table += '<th>ID</th><th>姓名</th><th>学号</th><th>班级名称</th><th>所属院系</th><th>操作</th></tr></thead><tbody>';
+
+        data.forEach(student => {
+            table += `<tr>
+      <td>${student.id}</td>
+      <td>${student.stuName}</td>
+      <td>${student.stuNo}</td>
+      <td>${student.sclass?.className || '未知班级'}</td>
+      <td>${student.sclass?.department || '未分配院系'}</td>
+      <td class="actions">
+        <button onclick="openScoreModal(${student.id}, '${student.stuName}')">打分</button>
+         <button onclick="viewScore(${student.id}, '${student.stuName}')">查看成绩</button>
+      </td>
+    </tr>`;
+        });
+
+        table += '</tbody></table>';
+        return table;
+    }
+
+    function searchStudents() {
+        if (!username) {
+            alert("缺少教师用户名");
+            return;
+        }
+
+        $.ajax({
+            url: `${BASE_URL}/api/byTeacher`,
+            method: 'GET',
+            data: { username: username },
+            success: (data) => {
+                if (!data || data.length === 0) {
+                    alert("该教师未分配学生");
+                    return;
+                }
+
+                const classId = data[0].stuClass;
+                if (!classId) {
+                    alert("无法获取班级信息");
+                    return;
+                }
+
+                const name = $('#searchName').val().trim();
+                const no = $('#searchNo').val().trim();
+
+                const params = { class_id: classId };
+                if (name) params.stu_name = name;
+                if (no) params.stu_no = no;
+
+                if (!name && !no) {
+                    alert('请输入至少一个搜索条件（姓名或学号）');
+                    return;
+                }
+
+                // 发起最终搜索请求
+                $.ajax({
+                    url: `${BASE_URL}/api/getStudentsByConditions`,
+                    method: 'GET',
+                    data: params,
+                    success: (resData) => {
+                        if (resData.length === 0) {
+                            $('#allStudentsTableContainer').html('<p style="color:red;">没有找到符合条件的学生</p>');
+                        } else {
+                            $('#allStudentsTableContainer').html(renderStudentsTable(resData));
+                        }
+                    },
+                    error: (error) => handleError('allStudentsTableContainer', error)
+                });
+
+            },
+            error: (error) => handleError('allStudentsTableContainer', error)
+        });
+    }
+
+    function resetSearch() {
+        $('#searchName').val('');
+        $('#searchNo').val('');
+        $('#searchClassId').val('');
+        getStudentsByTeacherUsername(username); // 重置时显示全部数据
+    }
+
+    function viewScore(studentId, studentName) {
+        $('#viewStudentName').text(studentName);
+        $('#studentScore').text('分数: 加载中...');
+        $('#scoreViewModal').show();
+        $('#modalOverlay').show();
+
+        $.ajax({
+            url: `${BASE_URL}/student-course-score`,
+            method: 'GET',
+            data: {
+                studentId: studentId,
+                teacherUsername: username
+            },
+            success: (response) => {
+                if(response.success && response.score !== "暂无成绩"){
+                    $('#studentScore').text(`分数: ${response.score}`);
+                } else {
+                    $('#studentScore').text('分数: 暂无成绩');
+                }
+            },
+            error: (error) => handleError('allStudentsTableContainer', error)
+        });
+    }
+
+    function closeScoreViewModal() {
+        $('#scoreViewModal').hide();
+        $('#modalOverlay').hide();
+    }
+
+    let currentStudentId = null;
+
+    function openScoreModal(studentId, studentName) {
+        currentStudentId = studentId;
+        $('#studentName').text(studentName);
+        $('#scoreModal').show();
+        $('#modalOverlay').show();
+    }
+
+    function closeScoreModal() {
+        currentStudentId = null;
+        $('#scoreInput').val('');
+        $('#scoreModal').hide();
+        $('#modalOverlay').hide();
+    }
+
+    function submitScore() {
+        const score = $('#scoreInput').val();
+        if (!score || isNaN(score) || score < 0 || score > 100) {
+            alert('请输入有效的分数（0~100）');
+            return;
+        }
+
+        $.ajax({
+            url: `${BASE_URL}/add1`,
+            method: 'POST',
+            data: {
+                studentId: currentStudentId,
+                teacherUsername: username,
+                score: parseFloat(score)
+            },
+            success: () => {
+                alert('打分成功');
+                closeScoreModal();
+                getStudentsByTeacherUsername(username); // 刷新列表
+            },
+            error: (error) => {
+                handleError('allStudentsTableContainer', error);
+            }
+        });
+    }
+
+    function getStudentsByTeacherUsername(username) {
+        $.ajax({
+            url: `${BASE_URL}/api/byTeacher`,
+            method: 'GET',
+            data: {
+                username: username // 使用查询参数方式
+            },
+            success: (data) => {
+                $('#allStudentsTableContainer').html(renderStudentsTable(data));
+            },
+            error: (error) => handleError('allStudentsTableContainer', error)
+        });
+    }
+
+    $(document).ready(function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+
+        if (username) {
+            getStudentsByTeacherUsername(username);
+        } else {
+            alert('系统错误');
+        }
+    });
+
+    function logout() {
+        if (confirm("确定要退出登录吗？")) {
+            // 清除 localStorage 中的记住信息
+            localStorage.removeItem('rememberedUsername');
+            localStorage.removeItem('rememberedPassword');
+            localStorage.removeItem('rememberedRole');
+
+            alert("已安全退出");
+            window.location.href = "login.html"; // 跳转回登录页
+        }
+    }
+</script>
+
+</body>
+</html>

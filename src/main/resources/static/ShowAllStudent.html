@@ -126,6 +126,8 @@
 <div class="container">
   <h1>学生管理系统</h1>
 
+  <a href="javascript:void(0);" onclick="logout()">退出登录</a>
+
   <!-- 搜索栏 -->
   <div class="search-bar">
     <input type="text" id="searchName" placeholder="请输入姓名">
@@ -136,6 +138,8 @@
   </div>
 
   <a href="addStudent.html">添加学生</a>
+
+  <a href="ShowAllTeacher.html">管理老师</a>
 
   <h2>所有学生信息</h2>
   <div id="allStudentsTableContainer"></div>
@@ -241,6 +245,18 @@
   $(document).ready(function () {
     getAllStudents();
   });
+
+  function logout() {
+    if (confirm("确定要退出登录吗？")) {
+      // 清除 localStorage 中的记住信息
+      localStorage.removeItem('rememberedUsername');
+      localStorage.removeItem('rememberedPassword');
+      localStorage.removeItem('rememberedRole');
+
+      alert("已安全退出");
+      window.location.href = "login.html"; // 跳转回登录页
+    }
+  }
 </script>
 
 </body>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>身份选择登录</title>
+  <style>
+    /* 全局样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      line-height: 1.6;
+      background-attachment: fixed;
+    }
+
+    /* 登录容器 */
+    .login-container {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 35px 35px;
+      transition: transform 0.3s ease;
+    }
+
+    .login-container:hover {
+      transform: translateY(-5px);
+    }
+
+    /* 标题样式 */
+    h2 {
+      text-align: center;
+      color: #1a73e8;
+      margin-bottom: 25px;
+      font-size: 24px;
+      font-weight: 600;
+      position: relative;
+    }
+
+    h2::after {
+      content: '';
+      width: 60px;
+      height: 3px;
+      background: #1a73e8;
+      border-radius: 2px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+    }
+
+    /* 表单组样式 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #5f6368;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      transition: color 0.3s ease;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 12px 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 8px rgba(26, 115, 232, 0.2);
+      background: #fff;
+    }
+
+    /* 下拉选择样式 */
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%235f6368"%3E%3Cpath d="M12 19l-7-7 1.41-1.41L12 16.17l5.59-5.58L19 12z"%3E%3C/path%3E%3C/svg%3E');
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      background-size: 18px;
+    }
+
+    /* 按钮样式 */
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.2);
+    }
+
+    button:hover {
+      background: #155cb4;
+      box-shadow: 0 6px 18px rgba(26, 115, 232, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 25px 25px;
+        max-width: 320px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>用户登录</h2>
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="role">用户类型：</label>
+      <select id="role" name="role" required>
+        <option value="">--请选择身份--</option>
+        <option value="student">学生</option>
+        <option value="teacher">教师</option>
+        <option value="admin">管理员</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="username">用户名：</label>
+      <input type="text" id="username" name="username" required placeholder="请输入学号/工号" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">密码：</label>
+      <input type="password" id="password" name="password" required placeholder="请输入密码" />
+    </div>
+
+    <button type="submit">立即登录</button>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="rememberMe" />
+        记住我
+      </label>
+    </div>
+  </form>
+</div>
+
+<!-- 引入 jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  const BASE_URL = 'http://localhost:8080';
+
+  $(document).ready(function () {
+    // 页面加载时读取 localStorage 中保存的信息
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    const savedRole = localStorage.getItem('rememberedRole');
+
+    if (savedUsername && savedPassword && savedRole) {
+      // 自动填充
+      $('#username').val(savedUsername);
+      $('#password').val(savedPassword);
+      $('#role').val(savedRole);
+
+      // 自动登录
+      autoLogin(savedRole, savedUsername, savedPassword);
+    }
+
+    // 处理手动提交登录
+    $('#loginForm').on('submit', function(event) {
+      // 阻止浏览器对表单提交的默认行为。先去检验是否记住
+      event.preventDefault();
+
+      const role = $('#role').val();
+      const username = $('#username').val().trim();
+      const password = $('#password').val().trim();
+      // 判断是否勾选我记住了
+      const remember = $('#rememberMe').is(':checked');
+
+      if (!role || !username || !password) {
+        alert('请填写完整的登录信息');
+        return;
+      }
+
+      if (remember) {
+        localStorage.setItem('rememberedUsername', username);
+        localStorage.setItem('rememberedPassword', password);
+        localStorage.setItem('rememberedRole', role);
+      } else {
+        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberedPassword');
+        localStorage.removeItem('rememberedRole');
+      }
+
+      performLogin(role, username, password);
+    });
+
+    // 执行登录逻辑
+    function performLogin(role, username, password) {
+      switch (role) {
+        case 'student':
+          $.ajax({
+            url: `${BASE_URL}/api/login`,
+            method: 'GET',
+            data: {
+              stu_no: username,
+              stu_password: password
+            },
+            success: function(data) {
+              if (data && data.id) {
+                alert('欢迎登录，同学！');
+                window.location.href = `student.html?stuNo=${username}&studentId=${data.id}`;
+              } else {
+                alert('登录信息有误，请检查后重试');
+              }
+            },
+            error: function(xhr, status, err) {
+              console.error('学生登录请求失败:', err);
+              alert('网络请求失败，请稍后再试');
+            }
+          });
+          break;
+
+        case 'teacher':
+          $.ajax({
+            url: `${BASE_URL}/api/teacherlogin`,
+            method: 'GET',
+            data: {
+              username: username,
+              password: password
+            },
+            success: function(data) {
+              if (data) {
+                alert('欢迎登录，老师！');
+                window.location.href = `teacher.html?username=${username}`;
+              } else {
+                alert('用户名或密码错误，请重新输入');
+              }
+            },
+            error: function(xhr, status, err) {
+              console.error('教师登录请求失败:', err);
+              alert('系统错误，请联系管理员');
+            }
+          });
+          break;
+
+        case 'admin':
+          if (username === 'admin' && password === 'admin') {
+            alert('管理员您好，欢迎进入系统！');
+            window.location.href = 'ShowAllStudent.html';
+          } else {
+            alert('管理员账户验证失败，请检查账户信息');
+          }
+          break;
+
+        default:
+          alert('请选择有效的用户身份');
+      }
+    }
+
+    // 自动登录函数
+    function autoLogin(role, username, password) {
+      switch (role) {
+        case 'student':
+          $.ajax({
+            url: `${BASE_URL}/api/login`,
+            method: 'GET',
+            data: {
+              stu_no: username,
+              stu_password: password
+            },
+            success: function(data) {
+              if (data && data.id) {
+                window.location.href = `student.html?stuNo=${username}&studentId=${data.id}`;
+              } else {
+                alert('自动登录失败，请重新登录');
+                clearLoginForm();
+              }
+            },
+            error: function() {
+              alert('自动登录失败，请检查网络或重新登录');
+              clearLoginForm();
+            }
+          });
+          break;
+
+        case 'teacher':
+          $.ajax({
+            url: `${BASE_URL}/api/teacherlogin`,
+            method: 'GET',
+            data: {
+              username: username,
+              password: password
+            },
+            success: function(data) {
+              if (data) {
+                window.location.href = `teacher.html?username=${username}`;
+              } else {
+                alert('自动登录失败，请重新登录');
+                clearLoginForm();
+              }
+            },
+            error: function() {
+              alert('自动登录失败，请检查网络或重新登录');
+              clearLoginForm();
+            }
+          });
+          break;
+
+        case 'admin':
+          if (username === 'admin' && password === 'admin') {
+            window.location.href = 'ShowAllStudent.html';
+          } else {
+            alert('自动登录失败，请重新登录');
+            clearLoginForm();
+          }
+          break;
+      }
+    }
+
+    // 清空表单并移除localStorage记录（失败时）
+    function clearLoginForm() {
+      localStorage.removeItem('rememberedUsername');
+      localStorage.removeItem('rememberedPassword');
+      localStorage.removeItem('rememberedRole');
+      $('#username').val('');
+      $('#password').val('');
+      $('#role').val('');
+    }
+  });
+</script>
+
+</body>
+</html>

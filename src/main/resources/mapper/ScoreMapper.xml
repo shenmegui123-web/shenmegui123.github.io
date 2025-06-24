@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo21.mapper.ScoreMapper">
+    <insert id="insertScore">
+        INSERT INTO score(student_id, subject_id, score)
+        VALUES (#{studentId}, #{subjectId}, #{score})
+            ON DUPLICATE KEY UPDATE score = #{score}
+    </insert>
+
+    <select id="getScoresBySubjectId" resultType="com.example.demo21.pojo.Score">
+        SELECT * FROM score WHERE subject_id = #{subjectId}
+    </select>
+
+    <select id="getScoresByStudentId" resultType="map">
+        SELECT s.subject_name AS subjectName, sc.score
+        FROM score sc
+                 JOIN subject s ON sc.subject_id = s.subject_id
+        WHERE sc.student_id = #{studentId}
+    </select>
+
+    <select id="getStudentScoreByTeacher" resultType="double">
+        SELECT s.score
+        FROM score s
+                 INNER JOIN teacher t ON s.subject_id = t.subject
+        WHERE s.student_id = #{studentId}
+          AND t.username = #{teacherUsername}
+    </select>
+
+    <insert id="insertScoreByTeacherUsername">
+        INSERT INTO score(student_id, subject_id, score)
+        SELECT #{studentId}, t.subject, #{score}
+        FROM teacher t
+        WHERE t.username = #{teacherUsername}
+        ON DUPLICATE KEY UPDATE score = #{score}
+    </insert>
+</mapper>

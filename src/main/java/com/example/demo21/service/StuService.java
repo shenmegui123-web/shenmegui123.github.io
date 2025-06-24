@@ -6,10 +6,12 @@ import java.util.Map;
 public interface StuService {
     List<Student> getAllStudents();
     Student getStudentById(int id);
+    Student selectStudentByNo(String no);
     Student addStudent(Student stu);
-    boolean updateStudent(int stuId, Student stu);  //can return void/int/bool/Student
-    void deleteStudent(int id);  //can return void/int/bool/Student
+    boolean updateStudent(int stuId, Student stu);
+    void deleteStudent(int id);
     List<Student> retrieveStudentsByName(String stuName);
     List<Student> selectStudentsByConditions(Map<String, Object> queryConditions);
-
+    Student login(Map<String, Object> queryConditions);
+    List<Student> getStudentsByTeacherUsername(String username);
 }

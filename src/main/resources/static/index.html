@@ -1,152 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-  <h1>简易功能概括</h1>
-
   <meta charset="UTF-8">
-  <title>Student Management</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script type="text/javascript">
-    const BASE_URL = 'http://localhost:8080'; // 基础后端URL
-
-    function handleResponse(responseDivId, response) {
-      document.getElementById(responseDivId).innerHTML = JSON.stringify(response, null, 2);
+  <title>学生管理系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    function handleError(responseDivId, error) {
-      const errorMsg = error.responseJSON ? JSON.stringify(error.responseJSON, null, 2) : error.statusText;
-      document.getElementById(responseDivId).innerHTML = `Error: ${errorMsg}`;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
     }
 
-    function getAllStudents() {
-      $.ajax({
-        url: `${BASE_URL}/api/getAllStudents`,
-        method: 'GET',
-        success: (data) => handleResponse('allStudents', data),
-        error: (error) => handleError('allStudents', error)
-      });
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
     }
 
-    function getStudentById() {
-      const stuId = $('#stuId').val();
-      if (!stuId) {
-        alert("请输入学生ID");
-        return;
+    h2 {
+      margin-top: 30px;
+      color: #444;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      padding: 8px 12px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    tr:hover {
+      background-color: #f1f5ff;
+    }
+
+    .actions button {
+      margin-right: 5px;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 15px;
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      input[type="text"], input[type="number"] {
+        width: 100%;
       }
-      $.ajax({
-        url: `${BASE_URL}/api/getStudentById/${stuId}`,
-        method: 'GET',
-        success: (data) => handleResponse('studentByIdResult', data),
-        error: (error) => handleError('studentByIdResult', error)
-      });
-    }
-
-    function addStudent() {
-      const stuId = parseInt($('#newStuId').val());
-      const stuName = $('#newStuName').val();
-      const stuNum = $('#newStuNum').val();
-      const stuClass = $('#newStuClass').val();
-
-      if (!stuId || !stuName || !stuNum || !stuClass) {
-        alert("请填写所有字段");
-        return;
+      .search-bar {
+        flex-direction: column;
+        align-items: stretch;
       }
-
-      const stu = {
-        id: stuId,
-        stuName: stuName,
-        stuNo: stuNum,
-        stuClass: stuClass
-      };
-
-      $.ajax({
-        url: `${BASE_URL}/api/addStudent`,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(stu),
-        success: (data) => handleResponse('addStudentResult', data),
-        error: (error) => handleError('addStudentResult', error)
-      });
     }
-
-    function updateStudent() {
-      const stuId = parseInt($('#updateStuId').val());
-      const newId = parseInt($('#updateNewId').val());
-      const stuName = $('#updateStuName').val();
-      const stuNum = $('#updateStuNum').val();
-      const stuClass = $('#updateStuClass').val();
-
-      if (!stuId || !newId || !stuName || !stuNum || !stuClass) {
-        alert("请填写所有字段");
-        return;
-      }
-
-      const stu = {
-        id: newId,
-        stuName: stuName,
-        stuNo: stuNum,
-        stuClass: stuClass
-      };
-
-      $.ajax({
-        url: `${BASE_URL}/api/updateStudent/${stuId}`,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify(stu),
-        success: (data) => handleResponse('updateStudentResult', data),
-        error: (error) => handleError('updateStudentResult', error)
-      });
-    }
-
-    function deleteStudent() {
-      const stuId = $('#delStuId').val();
-      if (!stuId) {
-        alert("请输入学生ID");
-        return;
-      }
-      $.ajax({
-        url: `${BASE_URL}/api/deleteStudent/${stuId}`,
-        method: 'DELETE',
-        success: (data) => handleResponse('deleteStudentResult', data),
-        error: (error) => handleError('deleteStudentResult', error)
-      });
-    }
-  </script>
+  </style>
 </head>
 <body>
 
-<a href="ShowAllStudent.html">去到系统首页</a>
+<div class="container">
+  <h1>学生管理系统</h1>
 
-<h2>获取所有学生</h2>
-<button onclick="getAllStudents()">获取所有学生</button>
-<pre id="allStudents"></pre>
+  <!-- 搜索栏 -->
+  <div class="search-bar">
+    <input type="text" id="searchName" placeholder="请输入姓名">
+    <input type="text" id="searchNo" placeholder="请输入学号">
+    <input type="text" id="searchClassId" placeholder="请输入班级ID">
+    <button onclick="searchStudents()">搜索</button>
+    <button onclick="resetSearch()">重置</button>
+  </div>
 
-<h2>按ID查询学生</h2>
-<input type="number" id="stuId" placeholder="输入学生ID">
-<button onclick="getStudentById()">查询</button>
-<pre id="studentByIdResult"></pre>
+  <a href="addStudent.html">添加学生</a>
 
-<h2>添加新学生</h2>
-<input type="number" id="newStuId" placeholder="输入ID">
-<input type="text" id="newStuName" placeholder="输入姓名">
-<input type="text" id="newStuNum" placeholder="输入学号">
-<input type="text" id="newStuClass" placeholder="输入班级">
-<button onclick="addStudent()">添加</button>
-<pre id="addStudentResult"></pre>
+  <h2>所有学生信息</h2>
+  <div id="allStudentsTableContainer"></div>
+</div>
 
-<h2>更新学生信息</h2>
-<input type="number" id="updateStuId" placeholder="原学生ID">
-<input type="number" id="updateNewId" placeholder="新学生ID">
-<input type="text" id="updateStuName" placeholder="新姓名">
-<input type="text" id="updateStuNum" placeholder="新学号">
-<input type="text" id="updateStuClass" placeholder="新班级">
-<button onclick="updateStudent()">更新</button>
-<pre id="updateStudentResult"></pre>
+<script>
+  const BASE_URL = 'http://localhost:8080';
+  const urlParams = new URLSearchParams(window.location.search);
+  const username = urlParams.get('username');
 
-<h2>按ID删除学生</h2>
-<input type="number" id="delStuId" placeholder="输入学生ID">
-<button onclick="deleteStudent()">删除</button>
-<pre id="deleteStudentResult"></pre>
+  function handleError(divId, error) {
+    const errorMsg = error.responseJSON ? JSON.stringify(error.responseJSON, null, 2) : error.statusText;
+    document.getElementById(divId).textContent = `错误: ${errorMsg}`;
+  }
+
+  function renderStudentsTable(data) {
+    if (!data || data.length === 0) {
+      return "<p>没有符合条件的学生数据</p>";
+    }
+
+    let table = '<table><thead><tr>';
+    table += '<th>ID</th><th>姓名</th><th>学号</th><th>班级名称</th><th>所属院系</th><th>操作</th></tr></thead><tbody>';
+
+    data.forEach(student => {
+      table += `<tr>
+      <td>${student.id}</td>
+      <td>${student.stuName}</td>
+      <td>${student.stuNo}</td>
+      <td>${student.sclass?.className || '未知班级'}</td>
+      <td>${student.sclass?.department || '未分配院系'}</td>
+      <td class="actions">
+        <button onclick="deleteStudent(${student.id})">删除</button>
+        <button onclick="updateStudent(${student.id})">修改</button>
+      </td>
+    </tr>`;
+    });
+
+    table += '</tbody></table>';
+    return table;
+  }
+
+  function searchStudents() {
+    const name = $('#searchName').val().trim();
+    const no = $('#searchNo').val().trim();
+    const classId = $('#searchClassId').val().trim();
+
+    // 构造查询参数
+    const params = {};
+    if (name) params.stu_name = name;
+    if (no) params.stu_no = no;
+    if (classId) params.class_id = classId;
+
+    // 调用后端接口
+    $.ajax({
+      url: `${BASE_URL}/api/getStudentsByConditions`,
+      method: 'GET',
+      data: params,
+      success: (data) => {
+        $('#allStudentsTableContainer').html(renderStudentsTable(data));
+      },
+      error: (error) => handleError('allStudentsTableContainer', error)
+    });
+  }
+
+  function resetSearch() {
+    $('#searchName').val('');
+    $('#searchNo').val('');
+    $('#searchClassId').val('');
+    getStudentsByTeacherUsername(); // 重置时显示全部数据
+  }
+
+  function deleteStudent(id) {
+    if (!confirm("确定要删除这个学生吗？")) {
+      return;
+    }
+
+    $.ajax({
+      url: `${BASE_URL}/api/deleteStudent/${id}`,
+      method: 'DELETE',
+      success: () => {
+        alert('删除成功');
+        getAllStudents();
+      },
+      error: (error) => {
+        handleError('allStudentsTableContainer', error);
+      }
+    });
+  }
+
+  function updateStudent(id) {
+    window.location.href = `updateStudent.html?id=${id}`;
+  }
+
+
+  function getStudentsByTeacherUsername(username) {
+    $.ajax({
+      url: `${BASE_URL}/api/byTeacher`,
+      method: 'GET',
+      data: {
+        username: username // 使用查询参数方式
+      },
+      success: (data) => {
+        $('#allStudentsTableContainer').html(renderStudentsTable(data));
+      },
+      error: (error) => handleError('allStudentsTableContainer', error)
+    });
+  }
+
+  $(document).ready(function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('username');
+
+    if (username) {
+      getStudentsByTeacherUsername(username);
+    }
+  });
+</script>
 
 </body>
 </html>

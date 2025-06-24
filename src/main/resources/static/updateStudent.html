@@ -53,7 +53,7 @@
 
         select {
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.  /2000/svg' viewBox='0 0 24 24' fill='%23666'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 8px center;
             background-size: 12px;
@@ -120,7 +120,6 @@
 
 <script>
     const BASE_URL = 'http://localhost:8080';
-    //从当前页面的url中查询id赋值给studentid
     const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('id');
 
@@ -186,7 +185,6 @@
             },
             error: function(xhr) {
                 showError('获取学生信息失败: ' + xhr.statusText);
-                setTimeout(() => window.location.href = 'list.html', 1500);
             }
         });
     }
